@@ -13,12 +13,7 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.debug = True
 
-story_model = StoryModel()
-
-
-@app.route('/')
-def hello_world():
-  return 404
+story_model = MockModel()  # StoryModel()
 
 
 @app.route('/image/upload', methods=['POST'])
@@ -41,7 +36,7 @@ def generate_story(image_id):
   time_hash.update(image_id)
   image_loc = os.path.join(app.config['UPLOAD_FOLDER'], time_hash.hexdigest())
   if not os.path.exists(image_loc):
-    return 404
+    return jsonify(error='File does not exist'), 404
   story = story_model.generate_story(image_loc=image_loc)
   return jsonify(story=story), 200
 
