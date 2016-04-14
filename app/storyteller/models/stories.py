@@ -17,11 +17,15 @@ class Story(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   story_type = db.Column(db.Integer, nullable=False)
   text = db.Column(db.String, nullable=False)
+  time_created = db.Column(db.DateTime, nullable=False)
+  user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
   files = db.relationship('UploadedFile', backref='story', lazy='dynamic')
 
-  def __init__(self, story_type, text):
+  def __init__(self, user_id, story_type, text, time_created):
+    self.user_id = user_id
     self.story_type = story_type
     self.text = text
+    self.time_created = time_created
 
   def __repr__(self):
     return '<Story %r>' % self.id

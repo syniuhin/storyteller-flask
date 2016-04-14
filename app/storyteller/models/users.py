@@ -9,6 +9,7 @@ class User(db.Model):
   email = db.Column(db.String(120), unique=True)
   password = db.Column(db.String(255), nullable=False)
   files = db.relationship('UploadedFile', backref='user', lazy='dynamic')
+  stories = db.relationship('Story', backref='user', lazy='dynamic')
 
   def __init__(self, username, email, password):
     self.username = username

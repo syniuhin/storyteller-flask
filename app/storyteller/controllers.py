@@ -10,10 +10,12 @@ from app import app, db
 from core.story_generator import *
 from models.files import *
 from models.users import *
+from models.stories import *
 
 import hashlib
 import os
 import time
+import datetime
 
 # Define the blueprint: 'auth', set its url prefix: app.url/auth
 storyteller = Blueprint('storyteller', __name__, url_prefix='/storyteller')
@@ -35,17 +37,25 @@ def upload_file():
   db.session.add(uploaded_file)
   db.session.commit()
 
-  file_id = UploadedFile.query.filter_by(filename=image_filename).first().id
-  return jsonify(id=file_id), 201
+  return jsonify(id=uploaded_file.id), 201
 
 
 @storyteller.route('/image/<string:image_id>/story', methods=['GET'])
 def generate_story(image_id):
   if not story_model.is_loaded():
     story_model.load_model()
-  image_filename = UploadedFile.query.filter_by(id=image_id).first().filename
-  image_loc = os.path.join(app.config['UPLOAD_DIR'], image_filename)
+  image_file = UploadedFile.query.filter_by(id=image_id).first()
+  image_loc = os.path.join(app.config['UPLOAD_DIR'], image_file.filename)
   if not os.path.exists(image_loc):
     return jsonify(error='File does not exist'), 404
-  story = story_model.generate_story(image_loc=image_loc)
-  return jsonify(story=story), 200
+  story_text = story_model.generate_story(image_loc=image_loc)
+
+  story = Story(user_id=0, story_type=0, text=story_text,
+                time_created=datetime.datetime.now())
+  db.session.add(story)
+  db.session.commit()
+
+  image_file.story_id = story.id
+  db.session.commit()
+
+  return jsonify(story=story_text), 200
