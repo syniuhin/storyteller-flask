@@ -1,24 +1,14 @@
-# Import flask dependencies
-from flask import Blueprint, jsonify, request
+from flask import jsonify, request
 
-# Import the database object from the main app module
 from app import app, db
 
-# Import module models (i.e. User)
-# from app.mod_auth.models import User
-
-from core import MockGenerator
-from models import Story, UploadedFile
+from app.storyteller.controllers import MockGenerator, storyteller, story_model
+from app.storyteller.models import Story, UploadedFile
 
 import hashlib
 import os
 import time
 import datetime
-
-# Define the blueprint: 'auth', set its url prefix: app.url/auth
-storyteller = Blueprint('storyteller', __name__, url_prefix='/storyteller')
-
-story_model = MockGenerator()  # StoryModel()
 
 
 @storyteller.route('/image/upload', methods=['POST'])

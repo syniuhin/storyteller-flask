@@ -14,16 +14,16 @@ app.config.from_object('config')
 # by modules and controllers
 db = SQLAlchemy(app)
 
-# Import a module / component using its blueprint handler variable (mod_auth)
+# We import all of our controllers first to help Blueprints initialize properly.
+from app.storyteller.controllers import image_controller
 from app.storyteller.controllers import storyteller
 
 # Register blueprint(s)
 app.register_blueprint(storyteller)
+print app.url_map
 
 # Build the database:
 # This will create the database file using SQLAlchemy
-from app.storyteller.models.stories import *
-from app.storyteller.models.users import *
-from app.storyteller.models.files import *
+from app.storyteller.models import Story, User, UploadedFile
 
 db.create_all()
