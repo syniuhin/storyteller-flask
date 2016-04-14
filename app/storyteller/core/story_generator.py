@@ -1,7 +1,7 @@
 from app.storyteller.neural import generate
 
 
-class StoryModel(object):
+class StoryGenerator(object):
   """
   Class for general model to generate stories about an image.
   """
@@ -22,14 +22,14 @@ class StoryModel(object):
     return generate.story(self.z, image_loc)
 
 
-class MockModel(StoryModel):
+class MockGenerator(StoryGenerator):
   """
   Mock class for imitating StoryModel, used to reduce startup time while
   debugging.
   """
 
   def __init__(self):
-    super(MockModel, self).__init__()
+    super(MockGenerator, self).__init__()
 
   def load_model(self):
     raise AttributeError('\'MockModel\' cannot load itself!')

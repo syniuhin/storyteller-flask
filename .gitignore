@@ -137,6 +137,7 @@ fabric.properties
 *.swp
 
 # skip-thoughts model
-neural
+app/storyteller/neural
 
 uploads/
+app.db

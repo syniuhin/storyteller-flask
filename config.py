@@ -5,7 +5,7 @@ DEBUG = True
 import os
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-UPLOAD_DIR = '/Users/infm/Coding/study/s4/oop/coursework/uploads'
+UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
 
 # Define the database - we are working with
 # SQLite for this example

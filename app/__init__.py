@@ -22,4 +22,8 @@ app.register_blueprint(storyteller)
 
 # Build the database:
 # This will create the database file using SQLAlchemy
+from app.storyteller.models.stories import *
+from app.storyteller.models.users import *
+from app.storyteller.models.files import *
+
 db.create_all()
