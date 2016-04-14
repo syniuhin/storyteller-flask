@@ -1,4 +1,4 @@
-from neural import generate
+from app.storyteller.neural import generate
 
 
 class StoryModel(object):
