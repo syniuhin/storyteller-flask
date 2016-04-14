@@ -7,10 +7,8 @@ from app import app, db
 # Import module models (i.e. User)
 # from app.mod_auth.models import User
 
-from core.story_generator import *
-from models.files import *
-from models.users import *
-from models.stories import *
+from core import MockGenerator
+from models import Story, UploadedFile
 
 import hashlib
 import os
