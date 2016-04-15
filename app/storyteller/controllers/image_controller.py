@@ -25,7 +25,7 @@ def upload_file():
   db.session.add(uploaded_file)
   db.session.commit()
 
-  return jsonify(id=uploaded_file.id), 201
+  return jsonify(image_id=uploaded_file.id), 201
 
 
 @storyteller.route('/image/<string:image_id>/story', methods=['GET'])
@@ -37,13 +37,20 @@ def generate_story(image_id):
   if not os.path.exists(image_loc):
     return jsonify(error='File does not exist'), 404
   story_text = story_model.generate_story(image_loc=image_loc)
+  return jsonify(story=story_text), 200
 
-  story = Story(user_id=0, story_type=0, text=story_text,
+
+@storyteller.route('/image/<string:image_id>/story/create', methods=['POST'])
+def create_story(image_id):
+  json = request.get_json()
+  if 'story' not in json or len(json['story']) < 1:
+    return 'Bad story', 403
+  story = Story(user_id=0, story_type=0, text=json['story'],
                 time_created=datetime.datetime.now())
   db.session.add(story)
   db.session.commit()
 
+  image_file = UploadedFile.query.filter_by(id=image_id).first()
   image_file.story_id = story.id
   db.session.commit()
-
-  return jsonify(story=story_text), 200
+  return jsonify(story_id=story.id), 201
