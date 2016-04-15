@@ -15,10 +15,12 @@ def create_user():
   json = request.get_json()
   if 'email' not in json or not EMAIL_REGEX.match(json['email']):
     return 'Bad email', 403
+  if User.query.filter_by(email=json['email']).first() is not None:
+    return 'Email has already been registered', 403
   if 'password' not in json or len(json['password']) < 6:
     return 'Bad password', 403
   if 'username' not in json:
-    json['username'] = json['email'].split('@')[1].capitalize()
+    json['username'] = json['email'].split('@')[0].capitalize()
   user = User(**json)
   db.session.add(user)
   db.session.commit()
