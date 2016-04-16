@@ -19,9 +19,9 @@ class FnDecorator(FnComponent):
     return self.component.execute(fn, **kwargs)
 
 
-class AuthFnDecorator(FnDecorator):
+class AuthenticateFnDecorator(FnDecorator):
   def __init__(self, component, auth_strategy):
-    super(AuthFnDecorator, self).__init__(component)
+    super(AuthenticateFnDecorator, self).__init__(component)
     self.auth_strategy = auth_strategy
 
   def execute(self, fn, **kwargs):

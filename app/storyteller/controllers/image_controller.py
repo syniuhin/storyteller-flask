@@ -3,10 +3,10 @@ import hashlib
 import os
 import time
 
-from flask import jsonify, request, abort
+from flask import jsonify, request, abort, send_file
 
 from app import app, db
-from app.storyteller.auth import HttpBasicAuthStrategy, AuthFnDecorator, \
+from app.storyteller.auth import HttpBasicAuthStrategy, AuthenticateFnDecorator, \
   ConcreteFn
 from app.storyteller.controllers import storyteller, story_model
 from app.storyteller.models import Story, UploadedFile
@@ -16,7 +16,7 @@ auth_strategy = HttpBasicAuthStrategy()
 
 @storyteller.route('/image/upload', methods=['POST'])
 def upload_file_auth():
-  res = AuthFnDecorator(ConcreteFn(), auth_strategy) \
+  res = AuthenticateFnDecorator(ConcreteFn(), auth_strategy) \
     .execute(upload_file, bound_request=request,
              user_id=auth_strategy.get_user_id(request.authorization))
   return jsonify(image_id=res), 201
@@ -37,9 +37,24 @@ def upload_file(user_id, **kwargs):
   return uploaded_file.id
 
 
+@storyteller.route('/image/<string:image_id>/download', methods=['GET'])
+def download_file_auth(image_id):
+  res = AuthenticateFnDecorator(ConcreteFn(), auth_strategy) \
+    .execute(download_file, bound_request=request, image_id=image_id)
+  return res, 200
+
+
+def download_file(image_id, **kwargs):
+  file_record = UploadedFile.query.filter_by(id=image_id).first()
+  if file_record is None:
+    return None
+  return send_file(os.path.join(app.config['UPLOAD_DIR'], file_record.filename),
+                   mimetype='image/jpeg')
+
+
 @storyteller.route('/image/<string:image_id>/story', methods=['GET'])
 def generate_story_auth(image_id):
-  res = AuthFnDecorator(ConcreteFn(), auth_strategy) \
+  res = AuthenticateFnDecorator(ConcreteFn(), auth_strategy) \
     .execute(generate_story, bound_request=request, image_id=image_id)
   return jsonify(text=res), 200
 
@@ -57,7 +72,7 @@ def generate_story(image_id, **kwargs):
 
 @storyteller.route('/image/<string:image_id>/story/create', methods=['POST'])
 def create_story_auth(image_id):
-  res = AuthFnDecorator(ConcreteFn(), auth_strategy).execute(
+  res = AuthenticateFnDecorator(ConcreteFn(), auth_strategy).execute(
     create_story, bound_request=request, image_id=image_id,
     user_id=auth_strategy.get_user_id(request.authorization))
   return jsonify(id=res), 201
