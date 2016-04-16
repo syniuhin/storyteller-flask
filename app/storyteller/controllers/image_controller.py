@@ -6,19 +6,20 @@ import time
 from flask import jsonify, request, abort, send_file
 
 from app import app, db
-from app.storyteller.auth import HttpBasicAuthStrategy, AuthenticateFnDecorator, \
-  ConcreteFn
+from app.storyteller.auth import HttpBasicAuthenticationStrategy, \
+  AuthenticationHandler, AuthorizationHandler, FinalHandler, \
+  FileAuthorizationStrategy
 from app.storyteller.controllers import storyteller, story_model
 from app.storyteller.models import Story, UploadedFile
 
-auth_strategy = HttpBasicAuthStrategy()
+basic_auth = HttpBasicAuthenticationStrategy()
 
 
 @storyteller.route('/image/upload', methods=['POST'])
 def upload_file_auth():
-  res = AuthenticateFnDecorator(ConcreteFn(), auth_strategy) \
-    .execute(upload_file, bound_request=request,
-             user_id=auth_strategy.get_user_id(request.authorization))
+  res = AuthenticationHandler(FinalHandler(), basic_auth).execute(
+    upload_file, bound_request=request,
+    user_id=basic_auth.get_user_id(request.authorization))
   return jsonify(image_id=res), 201
 
 
@@ -39,8 +40,9 @@ def upload_file(user_id, **kwargs):
 
 @storyteller.route('/image/<string:image_id>/download', methods=['GET'])
 def download_file_auth(image_id):
-  res = AuthenticateFnDecorator(ConcreteFn(), auth_strategy) \
-    .execute(download_file, bound_request=request, image_id=image_id)
+  res = AuthenticationHandler(
+    AuthorizationHandler(FinalHandler(), FileAuthorizationStrategy(image_id)),
+    basic_auth).execute(download_file, bound_request=request, image_id=image_id)
   return res, 200
 
 
@@ -54,8 +56,10 @@ def download_file(image_id, **kwargs):
 
 @storyteller.route('/image/<string:image_id>/story', methods=['GET'])
 def generate_story_auth(image_id):
-  res = AuthenticateFnDecorator(ConcreteFn(), auth_strategy) \
-    .execute(generate_story, bound_request=request, image_id=image_id)
+  res = AuthenticationHandler(
+    AuthorizationHandler(FinalHandler(), FileAuthorizationStrategy(image_id)),
+    basic_auth).execute(generate_story, bound_request=request,
+                        image_id=image_id)
   return jsonify(text=res), 200
 
 
@@ -72,9 +76,11 @@ def generate_story(image_id, **kwargs):
 
 @storyteller.route('/image/<string:image_id>/story/create', methods=['POST'])
 def create_story_auth(image_id):
-  res = AuthenticateFnDecorator(ConcreteFn(), auth_strategy).execute(
+  res = AuthenticationHandler(
+    AuthorizationHandler(FinalHandler(), FileAuthorizationStrategy(image_id)),
+    basic_auth).execute(
     create_story, bound_request=request, image_id=image_id,
-    user_id=auth_strategy.get_user_id(request.authorization))
+    user_id=basic_auth.get_user_id(request.authorization))
   return jsonify(id=res), 201
 
 

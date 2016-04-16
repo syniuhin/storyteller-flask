@@ -1,32 +1,49 @@
 from flask import abort
 
+from app.storyteller.models import User
 
-class FnComponent(object):
+
+class Handler(object):
   def execute(self, fn, **kwargs):
-    pass
+    raise NotImplementedError()
 
 
-class ConcreteFn(FnComponent):
+class FinalHandler(Handler):
   def execute(self, fn, **kwargs):
     return fn(**kwargs)
 
 
-class FnDecorator(FnComponent):
-  def __init__(self, component):
-    self.component = component
+class PredecessorHandler(Handler):
+  def __init__(self, successor):
+    self.successor = successor
 
   def execute(self, fn, **kwargs):
-    return self.component.execute(fn, **kwargs)
+    raise NotImplementedError()
 
 
-class AuthenticateFnDecorator(FnDecorator):
-  def __init__(self, component, auth_strategy):
-    super(AuthenticateFnDecorator, self).__init__(component)
-    self.auth_strategy = auth_strategy
+class AuthenticationHandler(PredecessorHandler):
+  def __init__(self, successor, authentication_strategy):
+    super(AuthenticationHandler, self).__init__(successor)
+    self.auth_strategy = authentication_strategy
 
   def execute(self, fn, **kwargs):
     request = kwargs.get('bound_request')
     if not request.authorization or \
         not self.auth_strategy.check(request.authorization):
       abort(401)
-    return self.component.execute(fn, **kwargs)
+    kwargs_updated = kwargs.copy()
+    kwargs_updated.update({'user_id': User.query.filter_by(
+      email=request.authorization.username).first().id})
+    return self.successor.execute(fn, **kwargs_updated)
+
+
+class AuthorizationHandler(PredecessorHandler):
+  def __init__(self, successor, authorization_strategy):
+    super(AuthorizationHandler, self).__init__(successor)
+    self.authorization_strategy = authorization_strategy
+
+  def execute(self, fn, **kwargs):
+    user_id = kwargs.get('user_id')
+    if not self.authorization_strategy.check(user_id):
+      abort(401)
+    return self.successor.execute(fn, **kwargs)
