@@ -1,3 +1,5 @@
+import datetime
+
 from app import db
 from app.storyteller.models import UploadedFile
 
@@ -51,9 +53,15 @@ class Story(db.Model):
 
   @staticmethod
   def list_for_user_wpic(user_id, **kwargs):
+    return Story.list_for_user_wpic_since(
+      user_id, since=datetime.datetime.fromtimestamp(0), **kwargs)
+
+  @staticmethod
+  def list_for_user_wpic_since(user_id, since, **kwargs):
     return [
       dict({"picture_url": Story.make_image_url(pic.id)}, **s.dict_serialize())
       for s, pic in
       db.session.query(Story, UploadedFile)
-        .filter(Story.user_id == user_id, Story.id == UploadedFile.story_id)
-        .all()]
+        .filter(Story.user_id == user_id,
+                Story.id == UploadedFile.story_id,
+                Story.time_created > since).all()]
