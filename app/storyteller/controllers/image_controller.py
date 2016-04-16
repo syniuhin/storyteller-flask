@@ -3,7 +3,7 @@ import hashlib
 import os
 import time
 
-from flask import jsonify, request
+from flask import jsonify, request, abort
 
 from app import app, db
 from app.storyteller.auth import HttpBasicAuthStrategy, AuthFnDecorator, \
@@ -11,7 +11,6 @@ from app.storyteller.auth import HttpBasicAuthStrategy, AuthFnDecorator, \
 from app.storyteller.controllers import storyteller, story_model
 from app.storyteller.models import Story, UploadedFile
 
-# authorizer = AuthorizerProxy(HttpBasicAuthStrategy())
 auth_strategy = HttpBasicAuthStrategy()
 
 
@@ -42,7 +41,7 @@ def upload_file(user_id, **kwargs):
 def generate_story_auth(image_id):
   res = AuthFnDecorator(ConcreteFn(), auth_strategy) \
     .execute(generate_story, bound_request=request, image_id=image_id)
-  return jsonify(story=res), 200
+  return jsonify(text=res), 200
 
 
 def generate_story(image_id, **kwargs):
@@ -67,9 +66,9 @@ def create_story_auth(image_id):
 def create_story(bound_request, image_id, user_id, **kwargs):
   json = bound_request.get_json()
 
-  if 'story' not in json or len(json['story']) < 1:
-    return 'Bad story', 403
-  story = Story(user_id=user_id, story_type=0, text=json['story'],
+  if 'text' not in json or len(json['text']) < 1:
+    abort(403)
+  story = Story(user_id=user_id, story_type=0, text=json['text'],
                 time_created=datetime.datetime.now())
   db.session.add(story)
   db.session.commit()
