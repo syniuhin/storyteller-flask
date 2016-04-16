@@ -1,2 +1,3 @@
-from user_authorizer import Authorizer, AuthorizerProxy
-from authentication import HttpBasicAuthStrategy
+from auth_decorators import AuthFnDecorator, ConcreteFn
+from auth_strategies import HttpBasicAuthStrategy
+

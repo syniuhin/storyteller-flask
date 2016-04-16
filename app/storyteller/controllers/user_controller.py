@@ -1,11 +1,10 @@
+import re
+
 from flask import jsonify, request
 
-from app import app, db
-
-from app.storyteller.controllers import MockGenerator, storyteller, story_model
+from app import db
+from app.storyteller.controllers import storyteller
 from app.storyteller.models import User
-
-import re
 
 EMAIL_REGEX = re.compile(r'[^@]+@[^@]+\.[^@]+')
 

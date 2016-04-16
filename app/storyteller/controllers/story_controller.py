@@ -1,20 +1,16 @@
 from flask import jsonify, request
 
-from app import app, db
+from app.storyteller.auth import HttpBasicAuthStrategy, AuthFnDecorator, \
+  ConcreteFn
+from app.storyteller.controllers import storyteller
+from app.storyteller.models import Story
 
-from app.storyteller.controllers import MockGenerator, storyteller, story_model
-from app.storyteller.models import User, Story
-from app.storyteller.auth import AuthorizerProxy, HttpBasicAuthStrategy
-
-authorizer = AuthorizerProxy(HttpBasicAuthStrategy())
+auth_strategy = HttpBasicAuthStrategy()
 
 
 @storyteller.route('/story/list', methods=['GET'])
 def list_stories():
-  auth = request.authorization
-  if not auth:
-    return 401
-
-  story_list = authorizer.execute(auth, fn=(lambda data: Story
-                                            .list_for_user(data['user_id'])))
+  story_list = AuthFnDecorator(ConcreteFn(), auth_strategy).execute(
+    fn=Story.list_for_user, bound_request=request,
+    user_id=auth_strategy.get_user_id(request.authorization))
   return jsonify(stories=story_list), 200

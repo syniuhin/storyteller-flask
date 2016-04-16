@@ -1,16 +1,14 @@
-from flask import abort, jsonify, request
-
-from app import app, db
+from flask import abort
 
 
 class AbstractAuthorizer(object):
-  def execute(self, request_data, fn):
+  def wrap(self, request, fn):
     pass
 
 
 class Authorizer(AbstractAuthorizer):
-  def execute(self, request_data, fn):
-    return fn(request_data)
+  def wrap(self, request, fn):
+    return fn(request)
 
 
 class AuthorizerProxy(AbstractAuthorizer):
@@ -19,10 +17,10 @@ class AuthorizerProxy(AbstractAuthorizer):
   def __init__(self, auth_strategy):
     self.auth = auth_strategy
 
-  def execute(self, request_data, fn):
-    result, data = self.auth.check(request_data)
+  def wrap(self, request, fn):
+    result, data = self.auth.check(request.authorization)
     if result:
-      return self.authorizer.execute(data, fn)
+      return self.authorizer.wrap(request, fn)
     else:
       # raise AttributeError('%r is not authorized' % request_data)
       abort(401)

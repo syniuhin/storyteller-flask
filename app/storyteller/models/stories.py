@@ -40,6 +40,6 @@ class Story(db.Model):
     }
 
   @staticmethod
-  def list_for_user(user_id):
+  def list_for_user(user_id, **kwargs):
     return [s.dict_serialize() for s in
             Story.query.filter_by(user_id=user_id).all()]
