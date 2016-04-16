@@ -15,7 +15,8 @@ app.config.from_object('config')
 db = SQLAlchemy(app)
 
 # We import all of our controllers first to help Blueprints initialize properly.
-from app.storyteller.controllers import image_controller, user_controller
+from app.storyteller.controllers import image_controller, user_controller, \
+    story_controller
 from app.storyteller.controllers import storyteller
 
 # Register blueprint(s)

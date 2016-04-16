@@ -29,3 +29,17 @@ class Story(db.Model):
 
   def __repr__(self):
     return '<Story %r>' % self.id
+
+  def dict_serialize(self):
+    return {
+      'id': self.id,
+      'story_type': self.story_type,
+      'text': self.text,
+      'time_created': self.time_created,
+      'user_id': self.user_id
+    }
+
+  @staticmethod
+  def list_for_user(user_id):
+    return [s.dict_serialize() for s in
+            Story.query.filter_by(user_id=user_id).all()]

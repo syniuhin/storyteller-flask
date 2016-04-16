@@ -1,4 +1,4 @@
-from flask import jsonify, request
+from flask import jsonify, request, make_response, send_file
 
 from app import app, db
 
@@ -53,4 +53,4 @@ def create_story(image_id):
   image_file = UploadedFile.query.filter_by(id=image_id).first()
   image_file.story_id = story.id
   db.session.commit()
-  return jsonify(story_id=story.id), 201
+  return jsonify(id=story.id), 201
