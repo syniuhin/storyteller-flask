@@ -1,4 +1,5 @@
 from app import db
+from app.storyteller.models import UploadedFile
 
 
 class Story(db.Model):
@@ -43,3 +44,16 @@ class Story(db.Model):
   def list_for_user(user_id, **kwargs):
     return [s.dict_serialize() for s in
             Story.query.filter_by(user_id=user_id).all()]
+
+  @staticmethod
+  def make_image_url(image_id):
+    return 'http://77.47.204.144:4000/storyteller/image/%d/download' % image_id
+
+  @staticmethod
+  def list_for_user_wpic(user_id, **kwargs):
+    return [
+      dict({"picture_url": Story.make_image_url(pic.id)}, **s.dict_serialize())
+      for s, pic in
+      db.session.query(Story, UploadedFile)
+        .filter(Story.user_id == user_id, Story.id == UploadedFile.story_id)
+        .all()]
