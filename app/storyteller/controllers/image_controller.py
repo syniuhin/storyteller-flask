@@ -11,6 +11,7 @@ from app.storyteller.auth import HttpBasicAuthenticationStrategy, \
   FinalHandler, FileAuthorizationStrategy, DemoFileAuthorizationStrategy
 from app.storyteller.controllers import storyteller, story_model
 from app.storyteller.models import Story, UploadedFile, UploadedFileTemp
+from app.storyteller.models import User
 
 basic_auth = HttpBasicAuthenticationStrategy()
 
@@ -64,7 +65,9 @@ def upload_file(user_id, **kwargs):
 def download_file_auth(image_id):
   res = AuthenticationHandler(
     AuthorizationHandler(FinalHandler(), FileAuthorizationStrategy(image_id)),
-    basic_auth).execute(download_file, bound_request=request, image_id=image_id)
+    basic_auth).execute(download_file, bound_request=request, image_id=image_id,
+                        user_id=User.query.filter_by(
+                          email=request.authorization.username).first().id)
   return res, 200
 
 
