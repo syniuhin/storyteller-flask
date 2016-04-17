@@ -1,4 +1,5 @@
-from auth_decorators import FinalHandler, AuthenticationHandler, \
-  AuthorizationHandler
+from auth_handlers import FinalHandler, AuthenticationHandler, \
+  AuthorizationHandler, AuthenticationDemoHandler
 from auth_strategies import HttpBasicAuthenticationStrategy, \
-  FileAuthorizationStrategy, StoryAuthorizationStrategy
+  FileAuthorizationStrategy, DemoFileAuthorizationStrategy, \
+  StoryAuthorizationStrategy

@@ -19,3 +19,16 @@ class UploadedFile(db.Model):
 
   def __repr__(self):
     return '<UploadedFile %r %r>' % (self.story_id, self.user_id)
+
+
+class UploadedFileTemp(db.Model):
+  __tablename__ = 'uploaded_file_temp'
+
+  id = db.Column(db.Integer, primary_key=True)
+  filename = db.Column(db.String(255), unique=True)
+
+  def __init__(self, filename):
+    self.filename = filename
+
+  def __repr__(self):
+    return '<UploadedFileTemp %r>' % self.filename

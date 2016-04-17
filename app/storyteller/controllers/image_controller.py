@@ -7,12 +7,34 @@ from flask import jsonify, request, abort, send_file
 
 from app import app, db
 from app.storyteller.auth import HttpBasicAuthenticationStrategy, \
-  AuthenticationHandler, AuthorizationHandler, FinalHandler, \
-  FileAuthorizationStrategy
+  AuthenticationHandler, AuthenticationDemoHandler, AuthorizationHandler, \
+  FinalHandler, FileAuthorizationStrategy, DemoFileAuthorizationStrategy
 from app.storyteller.controllers import storyteller, story_model
-from app.storyteller.models import Story, UploadedFile
+from app.storyteller.models import Story, UploadedFile, UploadedFileTemp
 
 basic_auth = HttpBasicAuthenticationStrategy()
+
+
+@storyteller.route('/demo/image/upload', methods=['POST'])
+def upload_file_demo():
+  res = AuthenticationDemoHandler(FinalHandler(), basic_auth).execute(
+    upload_demo_file, bound_request=request)
+  return jsonify(image_id=res), 201
+
+
+def upload_demo_file(**kwargs):
+  timestamp = int(time.time())
+  time_hash = hashlib.sha1()
+  time_hash.update(str(timestamp))
+  image_file = request.files['image']
+  image_filename = time_hash.hexdigest()
+  image_file.save(os.path.join(app.config['UPLOAD_TEMP_DIR'],
+                               image_filename))
+
+  uploaded_file = UploadedFileTemp(filename=image_filename)
+  db.session.add(uploaded_file)
+  db.session.commit()
+  return uploaded_file.id
 
 
 @storyteller.route('/image/upload', methods=['POST'])
@@ -68,6 +90,27 @@ def generate_story(image_id, **kwargs):
     story_model.load_model()
   image_file = UploadedFile.query.filter_by(id=image_id).first()
   image_loc = os.path.join(app.config['UPLOAD_DIR'], image_file.filename)
+  if not os.path.exists(image_loc):
+    return jsonify(error='File does not exist'), 404
+  story_text = story_model.generate_story(image_loc=image_loc)
+  return story_text
+
+
+@storyteller.route('/demo/image/<string:image_id>/story', methods=['GET'])
+def generate_story_demo(image_id):
+  res = AuthenticationDemoHandler(
+    AuthorizationHandler(FinalHandler(),
+                         DemoFileAuthorizationStrategy(image_id)),
+    basic_auth).execute(generate_demo_story, bound_request=request,
+                        image_id=image_id, user_id=-1)
+  return jsonify(text=res), 200
+
+
+def generate_demo_story(image_id, **kwargs):
+  if not story_model.is_loaded():
+    story_model.load_model()
+  image_file = UploadedFileTemp.query.filter_by(id=image_id).first()
+  image_loc = os.path.join(app.config['UPLOAD_TEMP_DIR'], image_file.filename)
   if not os.path.exists(image_loc):
     return jsonify(error='File does not exist'), 404
   story_text = story_model.generate_story(image_loc=image_loc)

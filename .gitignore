@@ -140,4 +140,5 @@ fabric.properties
 app/storyteller/neural
 
 uploads/
+uploads_tmp/
 app.db

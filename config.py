@@ -6,6 +6,7 @@ import os
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 UPLOAD_DIR = os.path.join(BASE_DIR, 'uploads')
+UPLOAD_TEMP_DIR = os.path.join(BASE_DIR, 'uploads_tmp')
 
 # Define the database - we are working with
 # SQLite for this example

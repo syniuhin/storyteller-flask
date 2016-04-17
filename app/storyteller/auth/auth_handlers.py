@@ -1,6 +1,6 @@
 from flask import abort
 
-from app.storyteller.models import User
+from util import AuthUser
 
 
 class Handler(object):
@@ -26,15 +26,33 @@ class AuthenticationHandler(PredecessorHandler):
     super(AuthenticationHandler, self).__init__(successor)
     self.auth_strategy = authentication_strategy
 
+  def check_auth(self, request):
+    if not request.authorization:
+      return False
+    auth_user = self.auth_strategy.check(request.authorization)
+    if auth_user is AuthUser.unknown or auth_user is AuthUser.demo:
+      return False
+    return True
+
   def execute(self, fn, **kwargs):
     request = kwargs.get('bound_request')
-    if not request.authorization or \
-        not self.auth_strategy.check(request.authorization):
+    if not self.check_auth(request):
       abort(401)
-    kwargs_updated = kwargs.copy()
-    kwargs_updated.update({'user_id': User.query.filter_by(
-      email=request.authorization.username).first().id})
-    return self.successor.execute(fn, **kwargs_updated)
+    return self.successor.execute(fn, **kwargs)
+
+
+class AuthenticationDemoHandler(AuthenticationHandler):
+  def __init__(self, successor, authentication_strategy):
+    super(AuthenticationDemoHandler, self).__init__(successor,
+                                                    authentication_strategy)
+
+  def check_auth(self, request):
+    if not request.authorization:
+      return False
+    auth_user = self.auth_strategy.check(request.authorization)
+    if auth_user is AuthUser.unknown or auth_user is AuthUser.auth:
+      return False
+    return True
 
 
 class AuthorizationHandler(PredecessorHandler):
