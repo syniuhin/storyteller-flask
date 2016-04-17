@@ -65,3 +65,13 @@ class Story(db.Model):
         .filter(Story.user_id == user_id,
                 Story.id == UploadedFile.story_id,
                 Story.time_created > since).all()]
+
+  @staticmethod
+  def list_for_user_wpic_after(user_id, after_id, **kwargs):
+    return [
+      dict({"picture_url": Story.make_image_url(pic.id)}, **s.dict_serialize())
+      for s, pic in
+      db.session.query(Story, UploadedFile)
+        .filter(Story.user_id == user_id,
+                Story.id == UploadedFile.story_id,
+                Story.id > after_id).all()]

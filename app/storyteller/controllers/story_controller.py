@@ -26,3 +26,11 @@ def list_stories_since(timestamp):
     user_id=basic_auth.get_user_id(request.authorization),
     since=datetime.datetime.fromtimestamp(float(timestamp)))
   return jsonify(stories=story_list), 200
+
+
+@storyteller.route('/story/list/after/<int:after_id>', methods=['GET'])
+def list_stories_afte(after_id):
+  story_list = AuthenticationHandler(FinalHandler(), basic_auth).execute(
+    fn=Story.list_for_user_wpic_after, bound_request=request,
+    user_id=basic_auth.get_user_id(request.authorization), after_id=after_id)
+  return jsonify(stories=story_list), 200
