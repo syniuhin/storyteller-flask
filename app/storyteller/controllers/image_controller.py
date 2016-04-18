@@ -66,8 +66,7 @@ def download_file_auth(image_id):
   res = AuthenticationHandler(
     AuthorizationHandler(FinalHandler(), FileAuthorizationStrategy(image_id)),
     basic_auth).execute(download_file, bound_request=request, image_id=image_id,
-                        user_id=User.query.filter_by(
-                          email=request.authorization.username).first().id)
+                        user_id=basic_auth.get_user_id(request.authorization))
   return res, 200
 
 
@@ -84,7 +83,8 @@ def generate_story_auth(image_id):
   res = AuthenticationHandler(
     AuthorizationHandler(FinalHandler(), FileAuthorizationStrategy(image_id)),
     basic_auth).execute(generate_story, bound_request=request,
-                        image_id=image_id)
+                        image_id=image_id,
+                        user_id=basic_auth.get_user_id(request.authorization))
   return jsonify(text=res), 200
 
 
