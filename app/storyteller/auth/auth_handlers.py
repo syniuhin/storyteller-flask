@@ -4,16 +4,26 @@ from util import AuthUser
 
 
 class Handler(object):
+  """
+  Abstraction over Chain of Responsibility element (handler).
+  We're passing function as a parameter `fn`
+  """
   def execute(self, fn, **kwargs):
     raise NotImplementedError()
 
 
 class FinalHandler(Handler):
+  """
+  Simple handler that just executes passed functions.
+  """
   def execute(self, fn, **kwargs):
     return fn(**kwargs)
 
 
 class PredecessorHandler(Handler):
+  """
+  Abstract handler that is not in the end of a chain.
+  """
   def __init__(self, successor):
     self.successor = successor
 
@@ -68,6 +78,10 @@ class AuthorizationHandler(PredecessorHandler):
 
 
 class HandlerBuilder(object):
+  """
+  Builder class to make creation of handlers easier.
+  Initializes with FinalHandler by default.
+  """
   def __init__(self):
     self.handler = FinalHandler()
 
