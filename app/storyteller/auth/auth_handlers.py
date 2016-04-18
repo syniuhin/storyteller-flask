@@ -65,3 +65,15 @@ class AuthorizationHandler(PredecessorHandler):
     if not self.authorization_strategy.check(user_id):
       abort(401)
     return self.successor.execute(fn, **kwargs)
+
+
+class HandlerBuilder(object):
+  def __init__(self):
+    self.handler = FinalHandler()
+
+  def add_handler(self, predecessor, **kwargs):
+    self.handler = predecessor(successor=self.handler, **kwargs)
+    return self
+
+  def build(self):
+    return self.handler

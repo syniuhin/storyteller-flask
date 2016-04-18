@@ -8,18 +8,20 @@ from flask import jsonify, request, abort, send_file
 from app import app, db
 from app.storyteller.auth import HttpBasicAuthenticationStrategy, \
   AuthenticationHandler, AuthenticationDemoHandler, AuthorizationHandler, \
-  FinalHandler, FileAuthorizationStrategy, DemoFileAuthorizationStrategy
+  FinalHandler, FileAuthorizationStrategy, DemoFileAuthorizationStrategy, \
+  HandlerBuilder
 from app.storyteller.controllers import storyteller, story_model
 from app.storyteller.models import Story, UploadedFile, UploadedFileTemp
-from app.storyteller.models import User
 
 basic_auth = HttpBasicAuthenticationStrategy()
 
 
 @storyteller.route('/demo/image/upload', methods=['POST'])
 def upload_file_demo():
-  res = AuthenticationDemoHandler(FinalHandler(), basic_auth).execute(
-    upload_demo_file, bound_request=request)
+  res = HandlerBuilder() \
+    .add_handler(AuthenticationDemoHandler, authentication_strategy=basic_auth) \
+    .build() \
+    .execute(upload_demo_file, bound_request=request)
   return jsonify(image_id=res), 201
 
 
@@ -40,9 +42,12 @@ def upload_demo_file(**kwargs):
 
 @storyteller.route('/image/upload', methods=['POST'])
 def upload_file_auth():
-  res = AuthenticationHandler(FinalHandler(), basic_auth).execute(
-    upload_file, bound_request=request,
-    user_id=basic_auth.get_user_id(request.authorization))
+  res = HandlerBuilder() \
+    .add_handler(AuthenticationHandler,
+                 authentication_strategy=basic_auth) \
+    .build() \
+    .execute(upload_file, bound_request=request,
+             user_id=basic_auth.get_user_id(request.authorization))
   return jsonify(image_id=res), 201
 
 
@@ -63,10 +68,14 @@ def upload_file(user_id, **kwargs):
 
 @storyteller.route('/image/<string:image_id>/download', methods=['GET'])
 def download_file_auth(image_id):
-  res = AuthenticationHandler(
-    AuthorizationHandler(FinalHandler(), FileAuthorizationStrategy(image_id)),
-    basic_auth).execute(download_file, bound_request=request, image_id=image_id,
-                        user_id=basic_auth.get_user_id(request.authorization))
+  res = HandlerBuilder() \
+    .add_handler(AuthorizationHandler,
+                 authorization_strategy=FileAuthorizationStrategy(image_id)) \
+    .add_handler(AuthenticationHandler,
+                 authentication_strategy=basic_auth) \
+    .build() \
+    .execute(download_file, bound_request=request, image_id=image_id,
+             user_id=basic_auth.get_user_id(request.authorization))
   return res, 200
 
 
@@ -80,11 +89,14 @@ def download_file(image_id, **kwargs):
 
 @storyteller.route('/image/<string:image_id>/story', methods=['GET'])
 def generate_story_auth(image_id):
-  res = AuthenticationHandler(
-    AuthorizationHandler(FinalHandler(), FileAuthorizationStrategy(image_id)),
-    basic_auth).execute(generate_story, bound_request=request,
-                        image_id=image_id,
-                        user_id=basic_auth.get_user_id(request.authorization))
+  res = HandlerBuilder() \
+    .add_handler(AuthorizationHandler,
+                 authorization_strategy=FileAuthorizationStrategy(image_id)) \
+    .add_handler(AuthenticationHandler,
+                 authentication_strategy=basic_auth) \
+    .build() \
+    .execute(generate_story, bound_request=request, image_id=image_id,
+             user_id=basic_auth.get_user_id(request.authorization))
   return jsonify(text=res), 200
 
 
@@ -101,11 +113,14 @@ def generate_story(image_id, **kwargs):
 
 @storyteller.route('/demo/image/<string:image_id>/story', methods=['GET'])
 def generate_story_demo(image_id):
-  res = AuthenticationDemoHandler(
-    AuthorizationHandler(FinalHandler(),
-                         DemoFileAuthorizationStrategy(image_id)),
-    basic_auth).execute(generate_demo_story, bound_request=request,
-                        image_id=image_id, user_id=-1)
+  res = HandlerBuilder() \
+    .add_handler(AuthorizationHandler,
+                 authorization_strategy=DemoFileAuthorizationStrategy(image_id)) \
+    .add_handler(AuthenticationDemoHandler,
+                 authentication_strategy=basic_auth) \
+    .build() \
+    .execute(generate_demo_story, bound_request=request,
+             image_id=image_id, user_id=-1)
   return jsonify(text=res), 200
 
 
@@ -122,11 +137,15 @@ def generate_demo_story(image_id, **kwargs):
 
 @storyteller.route('/image/<string:image_id>/story/create', methods=['POST'])
 def create_story_auth(image_id):
-  res = AuthenticationHandler(
-    AuthorizationHandler(FinalHandler(), FileAuthorizationStrategy(image_id)),
-    basic_auth).execute(
-    create_story, bound_request=request, image_id=image_id,
-    user_id=basic_auth.get_user_id(request.authorization))
+  user_id = basic_auth.get_user_id(request.authorization)
+  res = HandlerBuilder() \
+    .add_handler(AuthorizationHandler,
+                 authorization_strategy=FileAuthorizationStrategy(image_id)) \
+    .add_handler(AuthenticationHandler,
+                 authentication_strategy=basic_auth) \
+    .build() \
+    .execute(create_story, bound_request=request, image_id=image_id,
+             user_id=user_id)
   return jsonify(id=res), 201
 
 
